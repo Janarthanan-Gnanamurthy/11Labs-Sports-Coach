@@ -245,7 +245,7 @@
             @click="currentSlide < 5 ? nextSlide() : getStarted()"
             class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 rounded-2xl text-base sm:text-lg font-bold transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
           >
-            {{ currentSlide < 5 ? '🚀 Continue' : '🎮 Start Your Adventure' }}
+            {{ currentSlide < 5 ? 'Continue' : '🎮 Start Your Adventure' }}
           </button>
           
           <button 
