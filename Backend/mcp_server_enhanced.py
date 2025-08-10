@@ -8,6 +8,7 @@ import logging
 import os
 from typing import Any, Dict, List
 from datetime import datetime, timedelta
+import traceback
 
 from mcp.server import Server
 from mcp.server.models import InitializationOptions
@@ -111,16 +112,16 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 user = await session.get(User, user_id)
                 if not user:
                     return CallToolResult(content=[TextContent(type="text", text=f"User with ID {user_id} not found")])
-                return CallToolResult(content=[TextContent(type="text", text=json.dumps(user.dict(), default=str, indent=2))])
+                return CallToolResult(content=[TextContent(type="text", text=json.dumps(user.model_dump(), default=str, indent=2))])
         
         elif name == "create_user":
             user_data = UserCreate(**arguments)
             async with await get_db_session() as session:
-                user = User(**user_data.dict())
+                user = User(**user_data.model_dump())
                 session.add(user)
                 await session.commit()
                 await session.refresh(user)
-                return CallToolResult(content=[TextContent(type="text", text=f"User created successfully: {json.dumps(user.dict(), default=str, indent=2)}")])
+                return CallToolResult(content=[TextContent(type="text", text=f"User created successfully: {json.dumps(user.model_dump(), default=str, indent=2)}")])
         
         elif name == "generate_workout_plan":
             user_id = arguments["user_id"]
@@ -231,13 +232,13 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 success_rate = sum(1 for r in reports if r.success) / len(reports) if reports else 0
                 
                 progress_data = {
-                    "user_id": user_id,
-                    "period_days": days,
-                    "total_sessions": total_sessions,
-                    "average_rpe": round(avg_rpe, 2),
-                    "success_rate": round(success_rate, 2),
-                    "recent_reports": [r.dict() for r in reports[:10]]
-                }
+                        "user_id": user_id,
+                        "period_days": days,
+                        "total_sessions": total_sessions,
+                        "average_rpe": round(avg_rpe, 2),
+                        "success_rate": round(success_rate, 2),
+                        "recent_reports": [r.model_dump() for r in reports[:10]]
+                    }
                 
                 return CallToolResult(content=[TextContent(type="text", text=json.dumps(progress_data, default=str, indent=2))])
         
@@ -250,24 +251,29 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
 
 async def main():
     """Run the MCP server"""
-    # Initialize database
-    async with async_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-    
-    # Run the server
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="fitness-mcp-server-enhanced",
-                server_version="1.0.0",
-                capabilities=server.get_capabilities(
-                    notification_options=None,
-                    experimental_capabilities=None,
+    try:
+        # Initialize database
+        async with async_engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        
+        # Run the server
+        async with stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name="fitness-mcp-server-enhanced",
+                    server_version="1.0.0",
+                    capabilities=server.get_capabilities(
+                        notification_options=None,
+                        experimental_capabilities=None,
+                    ),
                 ),
-            ),
-        )
+            )
+    except Exception as e:
+        logger.error(f"Fatal error in main: {e}\n{traceback.format_exc()}")
+        print(f"❌ Fatal error: {e}")
+        raise
 
 if __name__ == "__main__":
     asyncio.run(main())

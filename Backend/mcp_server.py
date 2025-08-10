@@ -352,7 +352,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                         content=[TextContent(type="text", text=f"User with ID {user_id} not found")]
                     )
                 return CallToolResult(
-                    content=[TextContent(type="text", text=json.dumps(user.dict(), default=str, indent=2))]
+                    content=[TextContent(type="text", text=json.dumps(user.model_dump(), default=str, indent=2))]
                 )
         
         elif name == "list_users":
@@ -362,18 +362,18 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 result = await session.execute(query)
                 users = result.scalars().all()
                 return CallToolResult(
-                    content=[TextContent(type="text", text=json.dumps([user.dict() for user in users], default=str, indent=2))]
+                    content=[TextContent(type="text", text=json.dumps([user.model_dump() for user in users], default=str, indent=2))]
                 )
         
         elif name == "create_user":
             user_data = UserCreate(**arguments)
             async with await get_db_session() as session:
-                user = User(**user_data.dict())
+                user = User(**user_data.model_dump())
                 session.add(user)
                 await session.commit()
                 await session.refresh(user)
                 return CallToolResult(
-                    content=[TextContent(type="text", text=f"User created successfully: {json.dumps(user.dict(), default=str, indent=2)}")]
+                    content=[TextContent(type="text", text=f"User created successfully: {json.dumps(user.model_dump(), default=str, indent=2)}")]
                 )
         
         elif name == "get_user_plans":
@@ -383,7 +383,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 result = await session.execute(query)
                 plans = result.scalars().all()
                 return CallToolResult(
-                    content=[TextContent(type="text", text=json.dumps([plan.dict() for plan in plans], default=str, indent=2))]
+                    content=[TextContent(type="text", text=json.dumps([plan.model_dump() for plan in plans], default=str, indent=2))]
                 )
         
         elif name == "get_plan_details":
@@ -401,7 +401,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 days = days_result.scalars().all()
                 
                 plan_details = {
-                    "plan": plan.dict(),
+                    "plan": plan.model_dump(),
                     "days": []
                 }
                 
@@ -416,14 +416,14 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                     exercises_result = await session.execute(exercises_query)
                     exercises = [
                         {
-                            "instance": instance.dict(),
-                            "exercise_type": exercise_type.dict()
+                            "instance": instance.model_dump(),
+                            "exercise_type": exercise_type.model_dump()
                         }
                         for instance, exercise_type in exercises_result.all()
                     ]
                     
                     plan_details["days"].append({
-                        "day": day.dict(),
+                        "day": day.model_dump(),
                         "exercises": exercises
                     })
                 
@@ -444,7 +444,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 result = await session.execute(query)
                 exercise_types = result.scalars().all()
                 return CallToolResult(
-                    content=[TextContent(type="text", text=json.dumps([et.dict() for et in exercise_types], default=str, indent=2))]
+                    content=[TextContent(type="text", text=json.dumps([et.model_dump() for et in exercise_types], default=str, indent=2))]
                 )
         
         elif name == "create_exercise_type":
@@ -455,7 +455,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 await session.commit()
                 await session.refresh(exercise)
                 return CallToolResult(
-                    content=[TextContent(type="text", text=f"Exercise type created successfully: {json.dumps(exercise.dict(), default=str, indent=2)}")]
+                    content=[TextContent(type="text", text=f"Exercise type created successfully: {json.dumps(exercise.model_dump(), default=str, indent=2)}")]
                 )
         
         elif name == "report_workout_session":
@@ -551,13 +551,13 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 success_rate = sum(1 for r in reports if r.success) / len(reports) if reports else 0
                 
                 progress_data = {
-                    "user_id": user_id,
-                    "period_days": days,
-                    "total_sessions": total_sessions,
-                    "average_rpe": round(avg_rpe, 2),
-                    "success_rate": round(success_rate, 2),
-                    "recent_reports": [r.dict() for r in reports[:10]]
-                }
+                        "user_id": user_id,
+                        "period_days": days,
+                        "total_sessions": total_sessions,
+                        "average_rpe": round(avg_rpe, 2),
+                        "success_rate": round(success_rate, 2),
+                        "recent_reports": [r.model_dump() for r in reports[:10]]
+                    }
                 
                 return CallToolResult(
                     content=[TextContent(type="text", text=json.dumps(progress_data, default=str, indent=2))]
@@ -581,7 +581,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> CallToolResu
                 await session.refresh(plan)
                 
                 return CallToolResult(
-                    content=[TextContent(type="text", text=f"Plan updated successfully: {json.dumps(plan.dict(), default=str, indent=2)}")]
+                    content=[TextContent(type="text", text=f"Plan updated successfully: {json.dumps(plan.model_dump(), default=str, indent=2)}")]
                 )
         
         elif name == "delete_plan":

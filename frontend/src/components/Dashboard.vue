@@ -124,6 +124,26 @@
         </div>
       </div>
 
+      <!-- AI Assistant Card -->
+      <div class="bg-white rounded-3xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-900">AI Fitness Assistant</h2>
+          <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4">
+          <p class="text-gray-700 text-sm mb-4">Ask your AI assistant about workouts, nutrition, form tips, and progress tracking. Click the voice button to start talking!</p>
+          
+          <!-- ElevenLabs ConvAI Widget Container -->
+          <div class="flex justify-center">
+            <elevenlabs-convai agent-id="agent_4501k29zamd4faztws0yk8rhwp1y"></elevenlabs-convai>
+          </div>
+        </div>
+      </div>
+
       <!-- Recent Activity -->
       <div class="bg-white rounded-3xl shadow-sm p-6">
         <div class="flex items-center justify-between mb-4">
@@ -192,183 +212,196 @@
         </div>
       </div>
     </div>
-  
+  </div>
+</template>
 
-    </div>
-  </template>
-  
-  <script>
-  import { useUserStore } from '../stores/user.js'
-  import { useRouter } from 'vue-router'
-  import { ref, computed, onMounted } from 'vue'
-  
-  export default {
-    name: 'Dashboard',
-    setup() {
-      const userStore = useUserStore()
-      const router = useRouter()
+<script>
+import { useUserStore } from '../stores/user.js'
+import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+
+export default {
+  name: 'Dashboard',
+  setup() {
+    const userStore = useUserStore()
+    const router = useRouter()
+    
+    // Reactive data
+    const loading = ref(true)
+    const progressData = ref({})
+    const currentPlan = ref(null)
+    const recentReports = ref([])
+    const completedDays = ref(0)
+    
+    // Computed properties
+    const userProfile = computed(() => userStore.userProfile)
+    
+    // Check if user is logged in
+    const checkAuth = () => {
+      const isLoggedIn = userStore.loadUserFromStorage()
+      if (!isLoggedIn) {
+        router.push('/login')
+        return false
+      }
+      return true
+    }
+    
+    // Load ElevenLabs ConvAI script
+    const loadConvAIScript = () => {
+      // Check if script is already loaded
+      if (document.querySelector('script[src*="convai-widget-embed"]')) {
+        return
+      }
       
-      // Reactive data
-      const loading = ref(true)
-      const progressData = ref({})
-      const currentPlan = ref(null)
-      const recentReports = ref([])
-      const completedDays = ref(0)
-      
-      // Computed properties
-      const userProfile = computed(() => userStore.userProfile)
-      
-      // Check if user is logged in
-      const checkAuth = () => {
-        const isLoggedIn = userStore.loadUserFromStorage()
-        if (!isLoggedIn) {
-          router.push('/login')
-          return false
+      const script = document.createElement('script')
+      script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
+      script.async = true
+      script.type = 'text/javascript'
+      document.head.appendChild(script)
+    }
+    
+    // Fetch user progress data from backend
+    const fetchProgressData = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/users/${userProfile.value.id}/progress?days=30`)
+        if (response.ok) {
+          progressData.value = await response.json()
         }
-        return true
-      }
-      
-      // Fetch user progress data from backend
-      const fetchProgressData = async () => {
-        try {
-          const response = await fetch(`http://localhost:8000/users/${userProfile.value.id}/progress?days=30`)
-          if (response.ok) {
-            progressData.value = await response.json()
-          }
-        } catch (error) {
-          console.error('Error fetching progress data:', error)
-        }
-      }
-      
-      // Fetch user's current plan
-      const fetchCurrentPlan = async () => {
-        try {
-          const response = await fetch(`http://localhost:8000/users/${userProfile.value.id}/plans`)
-          if (response.ok) {
-            const plans = await response.json()
-            if (plans.length > 0) {
-              // Get the most recent active plan
-              const activePlan = plans.find(plan => plan.is_active) || plans[0]
-              const planDetailsResponse = await fetch(`http://localhost:8000/plans/${activePlan.id}`)
-              if (planDetailsResponse.ok) {
-                currentPlan.value = await planDetailsResponse.json()
-                // Calculate completed days (simplified - you might want to track this in the backend)
-                completedDays.value = Math.min(Math.floor(progressData.value.total_sessions / 2), currentPlan.value.plan.total_days)
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching current plan:', error)
-        }
-      }
-      
-      // Fetch recent session reports
-      const fetchRecentReports = async () => {
-        try {
-          const response = await fetch(`http://localhost:8000/users/${userProfile.value.id}/progress?days=7`)
-          if (response.ok) {
-            const data = await response.json()
-            recentReports.value = data.recent_reports || []
-          }
-        } catch (error) {
-          console.error('Error fetching recent reports:', error)
-        }
-      }
-      
-      // Load all data
-      const loadDashboardData = async () => {
-        loading.value = true
-        try {
-          await Promise.all([
-            fetchProgressData(),
-            fetchCurrentPlan(),
-            fetchRecentReports()
-          ])
-        } catch (error) {
-          console.error('Error loading dashboard data:', error)
-        } finally {
-          loading.value = false
-        }
-      }
-      
-      // Utility functions
-      const formatDate = (dateString) => {
-        const date = new Date(dateString)
-        const now = new Date()
-        const diffTime = Math.abs(now - date)
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        
-        if (diffDays === 1) return 'Yesterday'
-        if (diffDays === 0) return 'Today'
-        if (diffDays < 7) return `${diffDays} days ago`
-        
-        return date.toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric' 
-        })
-      }
-      
-      const getCurrentWeekRange = () => {
-        const now = new Date()
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()))
-        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6))
-        
-        return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-      }
-      
-      // Navigation methods
-      const startNewSession = () => {
-        router.push('/sport-selection')
-      }
-      
-      const startWorkout = () => {
-        if (currentPlan.value) {
-          // Start with day 1 or the next incomplete day
-          const nextDay = Math.min(completedDays.value + 1, currentPlan.value.plan.total_days)
-          router.push({
-            name: 'WorkoutOverview',
-            params: { 
-              planId: currentPlan.value.plan.id,
-              dayNumber: nextDay
-            }
-          })
-        }
-      }
-      
-      const viewSettings = () => {
-        router.push('/settings')
-      }
-      
-      const viewAllActivity = () => {
-        // You could navigate to a detailed activity page
-        console.log('View all activity')
-      }
-      
-      // Load data when component mounts
-      onMounted(() => {
-        if (!checkAuth()) {
-          return
-        }
-        loadDashboardData()
-      })
-      
-      return {
-        // State
-        loading,
-        progressData,
-        currentPlan,
-        recentReports,
-        completedDays,
-        userProfile,
-        
-        // Methods
-        formatDate,
-        getCurrentWeekRange,
-        startNewSession,
-        startWorkout,
-        viewSettings,
-        viewAllActivity
+      } catch (error) {
+        console.error('Error fetching progress data:', error)
       }
     }
+    
+    // Fetch user's current plan
+    const fetchCurrentPlan = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/users/${userProfile.value.id}/plans`)
+        if (response.ok) {
+          const plans = await response.json()
+          if (plans.length > 0) {
+            // Get the most recent active plan
+            const activePlan = plans.find(plan => plan.is_active) || plans[0]
+            const planDetailsResponse = await fetch(`http://localhost:8000/plans/${activePlan.id}`)
+            if (planDetailsResponse.ok) {
+              currentPlan.value = await planDetailsResponse.json()
+              // Calculate completed days (simplified - you might want to track this in the backend)
+              completedDays.value = Math.min(Math.floor(progressData.value.total_sessions / 2), currentPlan.value.plan.total_days)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching current plan:', error)
+      }
+    }
+    
+    // Fetch recent session reports
+    const fetchRecentReports = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/users/${userProfile.value.id}/progress?days=7`)
+        if (response.ok) {
+          const data = await response.json()
+          recentReports.value = data.recent_reports || []
+        }
+      } catch (error) {
+        console.error('Error fetching recent reports:', error)
+      }
+    }
+    
+    // Load all data
+    const loadDashboardData = async () => {
+      loading.value = true
+      try {
+        await Promise.all([
+          fetchProgressData(),
+          fetchCurrentPlan(),
+          fetchRecentReports()
+        ])
+      } catch (error) {
+        console.error('Error loading dashboard data:', error)
+      } finally {
+        loading.value = false
+      }
+    }
+    
+    // Utility functions
+    const formatDate = (dateString) => {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffTime = Math.abs(now - date)
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 1) return 'Yesterday'
+      if (diffDays === 0) return 'Today'
+      if (diffDays < 7) return `${diffDays} days ago`
+      
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      })
+    }
+    
+    const getCurrentWeekRange = () => {
+      const now = new Date()
+      const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()))
+      const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6))
+      
+      return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    }
+    
+    // Navigation methods
+    const startNewSession = () => {
+      router.push('/sport-selection')
+    }
+    
+    const startWorkout = () => {
+      if (currentPlan.value) {
+        // Start with day 1 or the next incomplete day
+        const nextDay = Math.min(completedDays.value + 1, currentPlan.value.plan.total_days)
+        router.push({
+          name: 'WorkoutOverview',
+          params: { 
+            planId: currentPlan.value.plan.id,
+            dayNumber: nextDay
+          }
+        })
+      }
+    }
+    
+    const viewSettings = () => {
+      router.push('/settings')
+    }
+    
+    const viewAllActivity = () => {
+      // You could navigate to a detailed activity page
+      console.log('View all activity')
+    }
+    
+    // Load data when component mounts
+    onMounted(() => {
+      if (!checkAuth()) {
+        return
+      }
+      loadDashboardData()
+      loadConvAIScript()
+    })
+    
+    return {
+      // State
+      loading,
+      progressData,
+      currentPlan,
+      recentReports,
+      completedDays,
+      userProfile,
+      
+      // Methods
+      formatDate,
+      getCurrentWeekRange,
+      startNewSession,
+      startWorkout,
+      viewSettings,
+      viewAllActivity
+    }
   }
-  </script>
+}
+</script>

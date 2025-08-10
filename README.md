@@ -1,95 +1,158 @@
-# 11Labs 2.0 Frontend
+# 11Labs 2.0 - Complete Application
 
-A Vue.js fitness application with AI coaching capabilities, featuring proper routing and state management.
+This repository contains the full 11Labs 2.0 application, featuring a Vue.js frontend with AI-powered coaching and a FastAPI backend. The system delivers personalized fitness coaching with real-time guidance, session tracking, and comprehensive state management.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+  - [Workflow Diagram](#workflow-diagram)
+  - [Frontend Architecture](#frontend-architecture)
+  - [Backend Architecture](#backend-architecture)
+- [Features](#features)
+- [Setup & Development](#setup--development)
+  - [Frontend Setup](#frontend-setup)
+  - [Backend Setup](#backend-setup)
+- [Deployment & Build](#deployment--build)
+- [API Documentation](#api-documentation)
+- [MCP Server (Optional)](#mcp-server-optional)
+- [Technology Stack](#technology-stack)
+- [Contribution Guidelines](#contribution-guidelines)
+
+## Overview
+
+11Labs 2.0 combines a modern Vue.js frontend with a robust FastAPI backend to offer a seamless, AI-powered fitness coaching experience. The application manages user sessions, delivers real-time coaching, tracks progress, and integrates optional advanced AI plan generation.
 
 ## Architecture
 
-### Routing Structure
-The application now uses Vue Router instead of component switching:
+### Workflow Diagram
 
-- `/` - Welcome page with onboarding slides
-- `/login` - User authentication
-- `/workout-plan-generation` - Generate personalized workout plans
-- `/sport-selection` - Choose your preferred sport/activity
-- `/agent-selection` - Select your AI coach personality
-- `/session-setup` - Configure workout session parameters
-- `/live-coaching` - Active AI coaching session
-- `/dashboard` - Progress tracking and session history
-- `/settings` - User profile and preferences
-- `/workout-overview/:planId/:dayNumber` - Workout plan overview before starting
-- `/workout-session/:planId/:dayNumber` - Individual exercise session
-- `/workout-celebration/:planId/:dayNumber` - Workout completion celebration
+```mermaid
+flowchart TD
+    A[User Interface] -->|Interacts| B[Vue.js Frontend]
+    B -->|API Calls| C(FastAPI Backend)
+    C -->|Database Operations| D[SQLite Database]
+    B -->|Routing & State| E[Vue Router & Pinia]
+    C -->|Optional AI Integration| F[MCP Server]
+```
 
-### State Management
-Uses Pinia for centralized state management with the `useUserStore`:
+### Frontend Architecture
 
-#### User Store Features:
-- **User Profile**: Name, email, fitness preferences
-- **Session Data**: Sport selection, agent choice, workout parameters
-- **Session History**: Track completed workouts with metrics
-- **Navigation State**: Current route tracking
-- **Computed Properties**: Weekly stats, recent sessions, progress calculations
+- **Framework:** Vue 3 using the Composition API with `<script setup>`.
+- **Routing:** Vue Router 4 establishes dedicated routes for:
+  - Welcome, Login, Workout Plan Generation, Sport/Agent Selection, Session Setup, Live Coaching, Dashboard, Settings, Workout Overview, and Workout Session/Celebration screens.
+- **State Management:** Utilizes Pinia to manage user sessions, profiles, and workout histories.
+- **Styling:** Tailwind CSS ensures a responsive, modern UI.
+- **Tooling:** Vite provides fast bundling and development.
 
-#### Key Store Methods:
-- `setUserProfile()` - Update user information
-- `setSelectedSport()` - Set chosen activity
-- `setSelectedAgent()` - Set AI coach preference
-- `addSessionToHistory()` - Save completed workout
-- `resetUserData()` - Clear all user data
+### Backend Architecture
+
+- **Framework:** FastAPI serves the API endpoints.
+- **Database:** SQLite is used via SQLAlchemy/SQLModel with asynchronous support.
+- **API Endpoints:**
+  - **Session Reporting:** `POST /users/{user_id}/plans/{plan_id}/session`
+  - **Progress Tracking:** `GET /users/{user_id}/progress`
+- **Development:** Runs with Uvicorn for hot reloading and efficient testing.
+- **Optional Integration:** An MCP server allows advanced AI workout plan generation with direct database access.
 
 ## Features
 
-### AI Coaching
-- ElevenLabs integration for voice coaching
-- Multiple coach personalities (Coach, Motivator, Buddy, Wellness Guide)
-- Real-time pose detection and feedback
-- Session customization (duration, intensity, mood)
+- **AI Coaching:** 
+  - ElevenLabs voice coaching with multiple coach personalities.
+  - Real-time exercise guidance and pose detection.
+- **Dynamic Workout Flow:** 
+  - Detailed workout overviews, progressive exercise sessions, and celebratory completion screens.
+- **Progress Tracking:** 
+  - Monitors session completion, weekly stats, and historical performance.
+- **Responsive Design:** 
+  - Smooth navigation and persistent state management across routes.
+  
+## Setup & Development
 
-### Workout Flow
-- **Workout Overview**: View workout plan details, exercises, and estimated time/calories
-- **Exercise Session**: One-by-one exercise progression with progress tracking
-- **Celebration**: Completion celebration with stats and progress updates
-- **Database Integration**: Automatic workout session saving to backend
-- **Progress Tracking**: Real-time progress updates and achievement tracking
+### Frontend Setup
 
-### Progress Tracking
-- Session completion tracking
-- Weekly statistics
-- Achievement system
-- Historical workout data
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies and start the development server:
+   ```bash
+   npm install
+   npm run dev
+   ```
+   - Access the app at [http://localhost:5173](http://localhost:5173).
 
-### User Experience
-- Responsive design with Tailwind CSS
-- Smooth navigation between routes
-- Persistent state across sessions
-- Back button navigation
+### Backend Setup
 
-## Development
+1. Navigate to the Backend directory:
+   ```bash
+   cd Backend
+   ```
+2. Set up a virtual environment and install dependencies:
+   ```bash
+   python -m venv .venv && .venv\Scripts\activate  # Windows
+   pip install -r requirements_mcp.txt
+   ```
+3. Start the FastAPI server:
+   ```bash
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   - View API docs at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-### Prerequisites
-- Node.js 16+
-- npm or yarn
+## Deployment & Build
 
-### Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Frontend Build
 
-### Build
-```bash
-npm run build
-```
+1. Build the application for production:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+2. Preview the production build:
+   ```bash
+   npm run preview
+   ```
+
+### Backend Deployment
+
+- Configure the environment variables (e.g., `DATABASE_URL`, `OLLAMA_URL`) as needed before deploying the backend.
+
+## API Documentation
+
+- **Session Completion:** `POST /users/{user_id}/plans/{plan_id}/session`
+- **User Progress:** `GET /users/{user_id}/progress`
+- Additional endpoints are fully documented in the Swagger UI at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+## MCP Server (Optional)
+
+For extended AI integration, run the MCP server:
+
+- **Basic MCP Server:**
+  ```bash
+  cd Backend
+  python mcp_server.py
+  ```
+- **Enhanced MCP Server with AI plan generation:**
+  ```bash
+  cd Backend
+  python mcp_server_enhanced.py
+  ```
 
 ## Technology Stack
 
-- **Vue 3** - Progressive JavaScript framework
-- **Vue Router 4** - Official router for Vue.js
-- **Pinia** - Intuitive, type safe store for Vue
-- **Tailwind CSS** - Utility-first CSS framework
-- **Vite** - Next generation frontend tooling
+- **Frontend:** Vue 3, Vue Router 4, Pinia, Tailwind CSS, Vite
+- **Backend:** FastAPI, SQLite, SQLAlchemy/SQLModel, Uvicorn
+- **Optional:** MCP server for advanced AI integration
 
-## Component Structure
+## Contribution Guidelines
 
-All components now use the Composition API with `<script setup>` syntax and integrate with the user store for state management and Vue Router for navigation.
+Contributions are welcome! Please adhere to the following guidelines:
+
+1. Fork the repository and create your branch from `main`.
+2. Write clear commit messages and document your changes.
+3. Submit a pull request with detailed descriptions.
+4. Ensure all tests pass before merging.
+
+---
+
+Happy coding! For any issues or questions, please use
