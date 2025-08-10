@@ -78,6 +78,16 @@ export default {
     const router = useRouter()
     
     const selectedAgentId = ref(null)
+
+    // Check if user is logged in
+    const checkAuth = () => {
+      const isLoggedIn = userStore.loadUserFromStorage()
+      if (!isLoggedIn) {
+        router.push('/login')
+        return false
+      }
+      return true
+    }
     
     const agents = [
       {
@@ -119,10 +129,12 @@ export default {
     })
     
     const selectAgent = (agent) => {
+      if (!checkAuth()) return
       selectedAgentId.value = agent.id
     }
     
     const continueToSetup = () => {
+      if (!checkAuth()) return
       if (selectedAgentId.value) {
         userStore.setSelectedAgent(selectedAgent.value)
         router.push('/session-setup')
@@ -131,6 +143,11 @@ export default {
 
     const goBack = () => {
       router.go(-1)
+    }
+
+    // Check authentication on component mount
+    if (!checkAuth()) {
+      return {}
     }
     
     return {

@@ -4,13 +4,17 @@ import { defineStore } from 'pinia'
 export const useUserStore = defineStore('user', () => {
   // User profile data
   const userProfile = ref({
-    id: 'user_001',
-    name: 'John Doe',
-    email: 'john@example.com',
+    id: null,
+    name: '',
+    email: '',
+    age: null,
+    gender: '',
+    fitness_level: '',
+    goals: '',
     preferences: {
       sport: 'running',
-      fitnessLevel: 'intermediate',
-      goals: ['endurance', 'weight-loss'],
+      fitnessLevel: 'beginner',
+      goals: [],
       notifications: true
     }
   })
@@ -90,6 +94,34 @@ export const useUserStore = defineStore('user', () => {
   // Actions
   function setUserProfile(profile) {
     userProfile.value = { ...userProfile.value, ...profile }
+  }
+
+  function loadUserFromStorage() {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      try {
+        const user = JSON.parse(userData)
+        userProfile.value = {
+          ...userProfile.value,
+          ...user,
+          preferences: {
+            ...userProfile.value.preferences,
+            fitnessLevel: user.fitness_level || 'beginner',
+            goals: user.goals ? [user.goals] : []
+          }
+        }
+        return true
+      } catch (error) {
+        console.error('Error loading user from storage:', error)
+        return false
+      }
+    }
+    return false
+  }
+
+  function logout() {
+    localStorage.removeItem('user')
+    resetUserData()
   }
 
   function setSelectedSport(sport) {
@@ -180,6 +212,8 @@ export const useUserStore = defineStore('user', () => {
     
     // Actions
     setUserProfile,
+    loadUserFromStorage,
+    logout,
     setSelectedSport,
     setSelectedAgent,
     setSessionData,

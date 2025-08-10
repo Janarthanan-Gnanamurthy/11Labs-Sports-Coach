@@ -191,7 +191,7 @@ export default {
       }
     },
     getStarted() {
-      this.$router.push('/sport-selection')
+      this.$router.push('/login')
     },
     handleTouchStart(event) {
       this.touchStartX = event.changedTouches[0].screenX

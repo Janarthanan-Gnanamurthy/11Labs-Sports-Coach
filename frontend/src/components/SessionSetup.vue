@@ -122,6 +122,16 @@ export default {
       intensity: 'medium',
       mood: ''
     })
+
+    // Check if user is logged in
+    const checkAuth = () => {
+      const isLoggedIn = userStore.loadUserFromStorage()
+      if (!isLoggedIn) {
+        router.push('/login')
+        return false
+      }
+      return true
+    }
     
     const intensityLevels = [
       { value: 'low', name: 'Easy', emoji: '🟢' },
@@ -130,12 +140,18 @@ export default {
     ]
     
     const startSession = () => {
+      if (!checkAuth()) return
       userStore.setSessionData(sessionData.value)
       router.push('/live-coaching')
     }
 
     const goBack = () => {
       router.go(-1)
+    }
+
+    // Check authentication on component mount
+    if (!checkAuth()) {
+      return {}
     }
     
     return {

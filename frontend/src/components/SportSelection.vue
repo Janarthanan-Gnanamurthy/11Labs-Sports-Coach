@@ -97,13 +97,29 @@ export default {
     const userStore = useUserStore()
     const router = useRouter()
     
+    // Check if user is logged in
+    const checkAuth = () => {
+      const isLoggedIn = userStore.loadUserFromStorage()
+      if (!isLoggedIn) {
+        router.push('/login')
+        return false
+      }
+      return true
+    }
+    
     const selectSport = (sport) => {
+      if (!checkAuth()) return
       userStore.setSelectedSport(sport)
       router.push('/agent-selection')
     }
 
     const goBack = () => {
       router.go(-1)
+    }
+    
+    // Check authentication on component mount
+    if (!checkAuth()) {
+      return {}
     }
     
     return {

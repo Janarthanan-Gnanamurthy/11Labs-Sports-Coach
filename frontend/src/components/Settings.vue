@@ -111,6 +111,12 @@
         Save Changes
       </button>
       <button 
+        @click="logout"
+        class="w-full bg-gray-100 text-gray-700 py-4 rounded-2xl text-lg font-medium hover:bg-gray-200 transition-all duration-200"
+      >
+        Logout
+      </button>
+      <button 
         @click="resetData"
         class="w-full bg-red-100 text-red-700 py-4 rounded-2xl text-lg font-medium hover:bg-red-200 transition-all duration-200"
       >
@@ -132,6 +138,16 @@ export default {
     const router = useRouter()
     
     const userProfile = computed(() => userStore.userProfile)
+
+    // Check if user is logged in
+    const checkAuth = () => {
+      const isLoggedIn = userStore.loadUserFromStorage()
+      if (!isLoggedIn) {
+        router.push('/login')
+        return false
+      }
+      return true
+    }
     
     const availableGoals = [
       { id: 'weight-loss', name: 'Weight Loss' },
@@ -147,9 +163,17 @@ export default {
     }
     
     const saveSettings = () => {
+      if (!checkAuth()) return
       userStore.setUserProfile(userProfile.value)
       // You could add a success message here
       router.push('/dashboard')
+    }
+    
+    const logout = () => {
+      if (confirm('Are you sure you want to logout?')) {
+        userStore.logout()
+        router.push('/')
+      }
     }
     
     const resetData = () => {
@@ -158,12 +182,18 @@ export default {
         router.push('/')
       }
     }
+
+    // Check authentication on component mount
+    if (!checkAuth()) {
+      return {}
+    }
     
     return {
       userProfile,
       availableGoals,
       goBack,
       saveSettings,
+      logout,
       resetData
     }
   }

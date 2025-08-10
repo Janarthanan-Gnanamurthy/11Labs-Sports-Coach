@@ -8,12 +8,17 @@ A Vue.js fitness application with AI coaching capabilities, featuring proper rou
 The application now uses Vue Router instead of component switching:
 
 - `/` - Welcome page with onboarding slides
+- `/login` - User authentication
+- `/workout-plan-generation` - Generate personalized workout plans
 - `/sport-selection` - Choose your preferred sport/activity
 - `/agent-selection` - Select your AI coach personality
 - `/session-setup` - Configure workout session parameters
 - `/live-coaching` - Active AI coaching session
 - `/dashboard` - Progress tracking and session history
 - `/settings` - User profile and preferences
+- `/workout-overview/:planId/:dayNumber` - Workout plan overview before starting
+- `/workout-session/:planId/:dayNumber` - Individual exercise session
+- `/workout-celebration/:planId/:dayNumber` - Workout completion celebration
 
 ### State Management
 Uses Pinia for centralized state management with the `useUserStore`:
@@ -39,6 +44,13 @@ Uses Pinia for centralized state management with the `useUserStore`:
 - Multiple coach personalities (Coach, Motivator, Buddy, Wellness Guide)
 - Real-time pose detection and feedback
 - Session customization (duration, intensity, mood)
+
+### Workout Flow
+- **Workout Overview**: View workout plan details, exercises, and estimated time/calories
+- **Exercise Session**: One-by-one exercise progression with progress tracking
+- **Celebration**: Completion celebration with stats and progress updates
+- **Database Integration**: Automatic workout session saving to backend
+- **Progress Tracking**: Real-time progress updates and achievement tracking
 
 ### Progress Tracking
 - Session completion tracking

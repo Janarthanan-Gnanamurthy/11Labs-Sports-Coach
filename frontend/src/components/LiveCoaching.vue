@@ -131,6 +131,16 @@ export default {
     const currentMessage = ref("Great! Let's start with some light stretching to warm up those muscles. I can see you're ready to go!")
     const timer = ref(null)
     const messageTimer = ref(null)
+
+    // Check if user is logged in
+    const checkAuth = () => {
+      const isLoggedIn = userStore.loadUserFromStorage()
+      if (!isLoggedIn) {
+        router.push('/login')
+        return false
+      }
+      return true
+    }
     
     const messages = [
       "Great! Let's start with some light stretching to warm up those muscles.",
@@ -193,6 +203,10 @@ export default {
     }
     
     onMounted(() => {
+      // Check authentication first
+      if (!checkAuth()) {
+        return
+      }
       startTimer()
       startMessageRotation()
     })
